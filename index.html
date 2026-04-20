@@ -832,5 +832,23 @@ function v(id){const el=document.getElementById(id);return el?el.value.trim():''
 function sv(id,val){const el=document.getElementById(id);if(el) el.value=val||'';}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 </script>
+  <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDjeDThaJ4i2JObQW3UcwIuIGgCYbvALnQ",
+    authDomain: "school-po-management-system.firebaseapp.com",
+    projectId: "school-po-management-system",
+    storageBucket: "school-po-management-system.firebasestorage.app",
+    messagingSenderId: "667025212438",
+    appId: "1:667025212438:web:c231ae295772d24b552137",
+    measurementId: "G-6WKENLJ5KX"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
 </body>
 </html>
