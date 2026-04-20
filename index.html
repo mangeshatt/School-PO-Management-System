@@ -277,7 +277,7 @@ td .wo-no{font-weight:700;color:var(--primary-light);font-size:.9rem}
             <div class="form-grid">
               <div class="form-group full">
                 <label>From *</label>
-                <input type="text" id="f-raised" readonly value="The Shri Ram Universal School, Pune">
+                <input type="text" id="f-raised" readonly value="The Shri Ram Universal School address- Vikas Nagar, Mamurdi, Dehu Road, Pimpri-Chinchwad, Maharashtra 412101">
               </div>
               <div class="form-group full">
                 <label>Vendor Name & Address *</label>
@@ -323,13 +323,13 @@ td .wo-no{font-weight:700;color:var(--primary-light);font-size:.9rem}
                 <label>Expected Completion</label>
                 <input type="date" id="f-expected">
               </div>
-              <div class="form-group">
-                <label>Actual Completion</label>
-                <input type="date" id="f-actual">
-              </div>
               <div class="form-group full">
                 <label>Remarks</label>
                 <textarea id="f-remarks" placeholder="Any additional remarks…"></textarea>
+              </div>
+              <div class="form-group full">
+                <label>Terms & Conditions</label>
+                <textarea id="f-terms" placeholder="Enter terms and conditions..."></textarea>
               </div>
             </div>
 
@@ -454,9 +454,11 @@ function loadSample(){
   workOrders=[
     {id:'s1',woNo:'WO-2026-0001',date:'2026-01-15',dept:'IT',type:'Repair',
      desc:'Projector not working in main hall, needs lamp replacement',
-     raised:'The Shri Ram Universal School, Pune',assigned:'Tech Solutions Pvt Ltd\n123 Tech Park, Pune',
-     start:'2026-01-16',expected:'2026-01-18',actual:'2026-01-17',
+     raised:'The Shri Ram Universal School address- Vikas Nagar, Mamurdi, Dehu Road, Pimpri-Chinchwad, Maharashtra 412101',
+     assigned:'Tech Solutions Pvt Ltd\n123 Tech Park, Pune',
+     start:'2026-01-16',expected:'2026-01-18',
      remarks:'Lamp replaced and tested OK',
+     terms: '1. Payment will be released within 15 days of completion.\n2. All parts must be genuine OEM.',
      items:[{desc:'Projector Lamp (EPSON EX3280)',rate:3500,qty:1},{desc:'HDMI Cable 5m',rate:450,qty:2}],
      cgstRate:9,sgstRate:9, advanceRate:0,
      issuedName:'Mr. Arun Sharma',issuedDesig:'Maintenance In-charge',
@@ -513,7 +515,7 @@ function renderDashboard(){
 
 /* ── Table ────────────────────────────────────────────── */
 function calcGrand(w){
-  const sub=(w.items||[]).reduce((s,r)=>s+(r.rate||0)*(r.qty||1),0);
+  const sub=(w.items||[]).reduce((s,r)=>s+(parseFloat(r.rate)||0)*(parseFloat(r.qty)||0),0);
   return sub + sub*(w.cgstRate||0)/100 + sub*(w.sgstRate||0)/100;
 }
 
@@ -575,8 +577,8 @@ function renderItems(){
       <td class="col-sno" style="text-align:center;color:#888;font-size:.82rem">${i+1}</td>
       <td class="col-desc"><input type="text" value="${esc(r.desc)}" placeholder="Item description" oninput="updItem('${r.id}','desc',this.value)"></td>
       <td class="col-rate"><input type="number" value="${r.rate||''}" placeholder="0.00" min="0" step="0.01" style="text-align:right" oninput="updItem('${r.id}','rate',this.value)"></td>
-      <td class="col-qty"><input type="number" value="${r.qty||1}" min="1" step="1" style="text-align:center" oninput="updItem('${r.id}','qty',this.value)"></td>
-      <td class="col-total item-total-cell" id="it-${r.id}">₹ ${fmt((r.rate||0)*(r.qty||1))}</td>
+      <td class="col-qty"><input type="number" value="${r.qty}" min="0" step="any" style="text-align:center" oninput="updItem('${r.id}','qty',this.value)"></td>
+      <td class="col-total item-total-cell" id="it-${r.id}">₹ ${fmt((parseFloat(r.rate)||0)*(parseFloat(r.qty)||0))}</td>
       <td class="col-del"><button class="btn btn-danger btn-sm" style="padding:3px 7px" onclick="removeItemRow('${r.id}')">✕</button></td>
     </tr>`).join('');
   recalcGST();
@@ -585,14 +587,14 @@ function renderItems(){
 function updItem(id,field,val){
   const r=itemRows.find(x=>x.id===id); if(!r) return;
   if(field==='rate') r.rate=parseFloat(val)||0;
-  else if(field==='qty') r.qty=parseInt(val)||1;
+  else if(field==='qty') r.qty=parseFloat(val)||0;
   else r.desc=val;
   const t=document.getElementById(`it-${id}`);
-  if(t) t.textContent=`₹ ${fmt((r.rate||0)*(r.qty||1))}`;
+  if(t) t.textContent=`₹ ${fmt((parseFloat(r.rate)||0)*(parseFloat(r.qty)||0))}`;
   recalcGST();
 }
 
-function getSubtotal(){ return itemRows.reduce((s,r)=>s+(r.rate||0)*(r.qty||1),0); }
+function getSubtotal(){ return itemRows.reduce((s,r)=>s+(parseFloat(r.rate)||0)*(parseFloat(r.qty)||0),0); }
 
 function recalcGST(){
   const sub=getSubtotal();
@@ -625,9 +627,9 @@ function getFormData(){
     assigned:       v('f-assigned'),
     start:          v('f-start'),
     expected:       v('f-expected'),
-    actual:         v('f-actual'),
     remarks:        v('f-remarks'),
-    items:          itemRows.map(r=>({desc:r.desc,rate:r.rate||0,qty:r.qty||1})),
+    terms:          v('f-terms'),
+    items:          itemRows.map(r=>({desc:r.desc,rate:parseFloat(r.rate)||0,qty:parseFloat(r.qty)||0})),
     cgstRate:       parseFloat(document.getElementById('cgst-rate').value)||0,
     sgstRate:       parseFloat(document.getElementById('sgst-rate').value)||0,
     advanceRate:    parseFloat(document.getElementById('advance-rate').value)||0,
@@ -643,7 +645,7 @@ function getFormData(){
 function setFormData(w){
   sv('f-wono',w.woNo); sv('f-date',w.date); sv('f-dept',w.dept); sv('f-type',w.type);
   sv('f-desc',w.desc); sv('f-raised',w.raised); sv('f-assigned',w.assigned); 
-  sv('f-start',w.start); sv('f-expected',w.expected); sv('f-actual',w.actual); sv('f-remarks',w.remarks);
+  sv('f-start',w.start); sv('f-expected',w.expected); sv('f-remarks',w.remarks); sv('f-terms',w.terms);
   document.getElementById('cgst-rate').value=w.cgstRate??9;
   document.getElementById('sgst-rate').value=w.sgstRate??9;
   document.getElementById('advance-rate').value=w.advanceRate||0;
@@ -657,11 +659,11 @@ function setFormData(w){
 
 function resetForm(){
   ['f-wono','f-date','f-dept','f-type','f-desc','f-assigned',
-   'f-start','f-expected','f-actual','f-remarks',
+   'f-start','f-expected','f-remarks','f-terms',
    'f-issued-name','f-issued-desig'].forEach(id=>sv(id,''));
   
   // Static Fields Reset
-  sv('f-raised','The Shri Ram Universal School, Pune');
+  sv('f-raised','The Shri Ram Universal School address- Vikas Nagar, Mamurdi, Dehu Road, Pimpri-Chinchwad, Maharashtra 412101');
   sv('f-admin-name', 'Satish Surve');
   sv('f-admin-desig', 'Admin');
   sv('f-principal-name', 'Anubha Gupta');
@@ -722,18 +724,19 @@ function confirmDelete(){
 /* ── Export CSV ───────────────────────────────────────── */
 function exportCSV(){
   const hdr=['WO No','Date','Department','Type of Work','Description',
-    'From','Assigned Vendor','Start Date','Expected Completion','Actual Completion',
+    'From','Assigned Vendor','Start Date','Expected Completion',
+    'Terms & Conditions',
     'No. of Items','Subtotal (₹)','CGST %','CGST Amount (₹)','SGST %','SGST Amount (₹)','Grand Total (₹)',
     'Advance %', 'Advance Amount (₹)', 'Balance Due (₹)',
     'Issued By – Name','Issued By – Designation',
     'Admin – Name','Admin – Designation',
     'Principal – Name','Principal – Designation'];
   const rows=workOrders.map(w=>{
-    const sub=(w.items||[]).reduce((s,r)=>s+(r.rate||0)*(r.qty||1),0);
+    const sub=(w.items||[]).reduce((s,r)=>s+(parseFloat(r.rate)||0)*(parseFloat(r.qty)||0),0);
     const camt=sub*(w.cgstRate||0)/100, samt=sub*(w.sgstRate||0)/100, grand=sub+camt+samt;
     const advAmt=grand*(w.advanceRate||0)/100;
     const bal=grand-advAmt;
-    return [w.woNo,w.date,w.dept,w.type,w.desc,w.raised,w.assigned,w.start,w.expected,w.actual,
+    return [w.woNo,w.date,w.dept,w.type,w.desc,w.raised,w.assigned,w.start,w.expected,w.terms,
       (w.items||[]).length,sub.toFixed(2),w.cgstRate,camt.toFixed(2),w.sgstRate,samt.toFixed(2),grand.toFixed(2),
       (w.advanceRate||0), advAmt.toFixed(2), bal.toFixed(2),
       w.issuedName,w.issuedDesig,w.adminName,w.adminDesig,w.principalName,w.principalDesig
@@ -754,7 +757,7 @@ function printWorkOrder(id){
 
 function doPrint(w){
   const items=w.items||[];
-  const sub=items.reduce((s,r)=>s+(r.rate||0)*(r.qty||1),0);
+  const sub=items.reduce((s,r)=>s+(parseFloat(r.rate)||0)*(parseFloat(r.qty)||0),0);
   const camt=sub*(w.cgstRate||0)/100, samt=sub*(w.sgstRate||0)/100, grand=sub+camt+samt;
   const advAmt=grand*(w.advanceRate||0)/100;
   const bal=grand-advAmt;
@@ -764,11 +767,11 @@ function doPrint(w){
     <td>${esc(r.desc)}</td>
     <td style="text-align:right">₹ ${fmt(r.rate)}</td>
     <td style="text-align:center">${r.qty}</td>
-    <td style="text-align:right;font-weight:700">₹ ${fmt(r.rate*r.qty)}</td>
+    <td style="text-align:right;font-weight:700">₹ ${fmt((parseFloat(r.rate)||0)*(parseFloat(r.qty)||0))}</td>
   </tr>`).join('');
 
   const leftMeta=[['Work Order No',w.woNo],['Date',w.date],['Department',w.dept],['Type of Work',w.type]];
-  const rightMeta=[['Start Date',w.start||'—'],['Expected Completion',w.expected||'—'],['Actual Completion',w.actual||'—'],['Remarks',w.remarks||'—']];
+  const rightMeta=[['Start Date',w.start||'—'],['Expected Completion',w.expected||'—'],['Remarks',w.remarks||'—']];
 
   document.getElementById('print-wo').innerHTML=`
     <div class="pw-hdr">
@@ -802,6 +805,9 @@ function doPrint(w){
         <div class="pw-gr" style="font-weight:700; background:#f5f7fa; color:#b7700a"><span>Balance Due</span><span>₹ ${fmt(bal)}</span></div>
       </div>
     </div>
+    
+    ${w.terms ? `<div style="font-size:10px; margin-bottom:14px;"><strong>Terms & Conditions:</strong><br><span style="white-space:pre-wrap">${esc(w.terms)}</span></div>` : ''}
+
     <div class="pw-sigs">
       <div class="pw-sb"><div class="n">${esc(w.issuedName||'')}</div><div class="sl">${esc(w.issuedDesig||'Issued By')}</div></div>
       <div class="pw-sb"><div class="n">${esc(w.adminName||'')}</div><div class="sl">${esc(w.adminDesig||'Admin')}</div></div>
